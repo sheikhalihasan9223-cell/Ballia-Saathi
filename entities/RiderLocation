@@ -1,0 +1,89 @@
+{
+  "name": "RiderLocation",
+  "type": "object",
+  "properties": {
+    "rider_email": {
+      "type": "string"
+    },
+    "rider_name": {
+      "type": "string"
+    },
+    "rider_phone": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": "string"
+    },
+    "order_number": {
+      "type": "string"
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "is_online": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "delivering",
+        "offline"
+      ],
+      "default": "offline"
+    },
+    "last_updated": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rider_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Banner",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string",
+      "description": "Category or product link"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "position": {
+      "type": "number",
+      "description": "Display order"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
