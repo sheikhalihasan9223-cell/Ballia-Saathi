@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { ChevronLeft, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,14 +14,12 @@ import {
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [form, setForm] = useState({ full_name: '', phone: '', email: '' });
   const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setUser(u);
+    localClient.auth.me().then(u => {
       setForm({ full_name: u.full_name || '', phone: u.phone || '', email: u.email || '' });
       if (u.avatar_url) setAvatar(u.avatar_url);
     });
@@ -30,13 +28,13 @@ export default function ProfileEdit() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await localClient.integrations.Core.UploadFile({ file });
     setAvatar(file_url);
   };
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ phone: form.phone, avatar_url: avatar });
+    await localClient.auth.updateMe({ phone: form.phone, avatar_url: avatar });
     setSaving(false);
     toast.success('Profile updated!');
     navigate('/profile');

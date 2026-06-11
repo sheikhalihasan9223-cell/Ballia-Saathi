@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getCart, updateQuantity, removeFromCart, getCartTotal, clearCart } from '@/lib/cartStore';
-import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCart, updateQuantity } from '@/lib/cartStore';
+import { localClient } from '@/api/localClient';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Plus, Minus, Trash2, Tag, Zap, ChevronRight, ShoppingBag, Gift } from 'lucide-react';
+import { Plus, Minus, Tag, Zap, ChevronRight, ShoppingBag, Gift } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -14,7 +14,6 @@ export default function Cart() {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     const sync = () => setItems(getCart());
@@ -24,7 +23,7 @@ export default function Cart() {
 
   const { data: coupons = [] } = useQuery({
     queryKey: ['coupons'],
-    queryFn: () => base44.entities.Coupon.filter({ is_active: true }),
+    queryFn: () => localClient.entities.Coupon.filter({ is_active: true }),
   });
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -53,39 +52,6 @@ export default function Cart() {
     setAppliedCoupon(coupon);
     toast.success(`Coupon "${coupon.code}" applied!`);
   };
-
-  const placeOrderMutation = useMutation({
-    mutationFn: async () => {
-      const user = await base44.auth.me();
-      const orderNumber = 'ZPR' + Date.now().toString(36).toUpperCase();
-      return base44.entities.Order.create({
-        order_number: orderNumber,
-        items: items.map(i => ({
-          product_id: i.product_id,
-          name: i.name,
-          image_url: i.image_url,
-          price: i.price,
-          quantity: i.quantity,
-          unit: i.unit,
-        })),
-        subtotal,
-        delivery_fee: deliveryFee,
-        discount,
-        total,
-        status: 'placed',
-        payment_method: 'online',
-        coupon_code: appliedCoupon?.code || '',
-        estimated_delivery: '20 minutes',
-        user_email: user.email,
-      });
-    },
-    onSuccess: (order) => {
-      clearCart();
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      navigate(`/order/${order.id}`);
-      toast.success('Order placed successfully!');
-    },
-  });
 
   if (!items.length) {
     return (

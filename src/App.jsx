@@ -1,10 +1,11 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { logoUrl } from '@/api/localClient';
 
 import AppLayout from '@/components/layout/AppLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -37,6 +38,10 @@ import AdminCategories from '@/pages/admin/AdminCategories';
 import RiderPanel from '@/pages/RiderPanel';
 import UpiPayment from '@/pages/UpiPayment';
 import UpiConfirm from '@/pages/UpiConfirm';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -45,7 +50,7 @@ const AuthenticatedApp = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <img src="https://media.base44.com/images/public/6a13f955573598b80a82a5b2/487d60ee3_ChatGPTImageMay27202601_03_13PM.png" alt="Ballia Saathi" className="w-12 h-12 rounded-2xl object-cover animate-pulse" />
+          <img src={logoUrl} alt="Ballia Saathi" className="w-12 h-12 rounded-2xl object-cover animate-pulse" />
           <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
         </div>
       </div>
@@ -63,6 +68,12 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      {/* Auth pages */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
       {/* Customer Routes with bottom nav */}
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
@@ -86,12 +97,12 @@ const AuthenticatedApp = () => {
       <Route path="/profile/payment" element={<PaymentManagement />} />
 
       {/* Rider Panel */}
-      <Route path="/rider" element={<RiderPanel />} />
+      <Route path="/rider" element={<RoleRoute roles={['rider', 'super_admin']}><RiderPanel /></RoleRoute>} />
       <Route path="/upi-payment" element={<UpiPayment />} />
       <Route path="/upi-confirm" element={<UpiConfirm />} />
 
       {/* Admin Routes */}
-      <Route element={<AdminLayout />}>
+      <Route element={<RoleRoute roles={['admin', 'super_admin']}><AdminLayout /></RoleRoute>}>
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
@@ -106,6 +117,16 @@ const AuthenticatedApp = () => {
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
+};
+
+const RoleRoute = ({ roles, children }) => {
+  const { user, isLoadingAuth } = useAuth();
+
+  if (isLoadingAuth) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!roles.includes(user.role || 'user')) return <Navigate to="/profile" replace />;
+
+  return children;
 };
 
 function App() {

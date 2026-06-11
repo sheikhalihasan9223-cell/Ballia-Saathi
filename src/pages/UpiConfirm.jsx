@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCart, clearCart } from '@/lib/cartStore';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sendOrderToWhatsApp } from '@/lib/whatsappOrder';
 import { toast } from 'sonner';
@@ -20,12 +20,12 @@ export default function UpiConfirm() {
 
   const placeOrder = useMutation({
     mutationFn: async () => {
-      const user = await base44.auth.me();
+      const user = await localClient.auth.me();
       const orderNumber = 'ZPR' + Date.now().toString(36).toUpperCase();
-      const addresses = await base44.entities.Address.filter({ user_email: user.email });
+      const addresses = await localClient.entities.Address.filter({ user_email: user.email });
       const addr = addresses.find(a => a.is_default) || addresses[0];
       const deliveryAddress = addr ? `${addr.full_address}, ${addr.city}` : 'Address not set';
-      return base44.entities.Order.create({
+      return localClient.entities.Order.create({
         order_number: orderNumber,
         items: items.map(i => ({ product_id: i.product_id, name: i.name, image_url: i.image_url, price: i.price, quantity: i.quantity, unit: i.unit })),
         subtotal, delivery_fee: deliveryFee, discount: 0, total,

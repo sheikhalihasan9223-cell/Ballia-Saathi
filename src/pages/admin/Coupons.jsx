@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, Tag } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,11 +19,11 @@ export default function CouponsAdmin() {
 
   const { data: coupons = [] } = useQuery({
     queryKey: ['admin-coupons'],
-    queryFn: () => base44.entities.Coupon.list('-created_date'),
+    queryFn: () => localClient.entities.Coupon.list('-created_date'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Coupon.create(data),
+    mutationFn: (data) => localClient.entities.Coupon.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       setOpen(false);
@@ -34,7 +33,7 @@ export default function CouponsAdmin() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Coupon.delete(id),
+    mutationFn: (id) => localClient.entities.Coupon.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       toast.success('Coupon deleted');

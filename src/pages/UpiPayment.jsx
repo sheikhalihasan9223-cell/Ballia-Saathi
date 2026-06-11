@@ -154,7 +154,7 @@ export default function UpiPayment() {
           <button
             onClick={() => {
               // Place order as online payment confirmed
-              navigate(onSuccessPath, { state: { paymentMethod: 'online', paymentApp: selected } });
+              navigate(onSuccessPath, { state: { paymentMethod: 'online', paymentApp: selected, orderData } });
             }}
             className="w-full py-3 rounded-2xl bg-green-500 text-white font-bold text-sm hover:bg-green-600 active:scale-98 transition-all"
           >

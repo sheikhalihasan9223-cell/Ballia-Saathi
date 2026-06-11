@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { Zap, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +34,7 @@ export default function HeroBanner() {
   const touchStartX = useRef(null);
   const { data: dbBanners = [] } = useQuery({
     queryKey: ['banners'],
-    queryFn: () => base44.entities.Banner.filter({ is_active: true }, 'position'),
+    queryFn: () => localClient.entities.Banner.filter({ is_active: true }, 'position'),
   });
 
   const banners = dbBanners.length > 0 ? dbBanners : FALLBACK_BANNERS;

@@ -85,7 +85,7 @@ export default function AdminCategories() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cats.map(cat => {
-          const Icon = cat.icon;
+          const Icon = typeof cat.icon === 'function' || typeof cat.icon === 'string' ? cat.icon : null;
           return (
             <div key={cat.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
               <div className="w-14 h-14 rounded-xl overflow-hidden border border-border shrink-0">

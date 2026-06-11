@@ -1,20 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { localClient } from '@/api/localClient';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { sendPushNotification, ORDER_STATUS_MESSAGES } from '@/lib/useNotifications';
 
 export default function MyOrders() {
   const [user, setUser] = useState(null);
-  const queryClient = useQueryClient();
   const prevStatuses = useRef({});
-  useEffect(() => { base44.auth.me().then(setUser); }, []);
+  useEffect(() => { localClient.auth.me().then(setUser); }, []);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ user_email: user.email }, '-created_date'),
+    queryFn: () => localClient.entities.Order.filter({ user_email: user.email }, '-created_date'),
     enabled: !!user?.email,
     refetchInterval: 15000,
   });

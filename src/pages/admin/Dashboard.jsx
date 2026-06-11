@@ -1,6 +1,6 @@
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, Package, ShoppingBag, Users, TrendingUp, Zap, AlertTriangle } from 'lucide-react';
+import { DollarSign, Package, ShoppingBag, Users, Zap, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -10,17 +10,17 @@ const COLORS = ['hsl(267, 84%, 58%)', 'hsl(328, 80%, 58%)', 'hsl(200, 80%, 55%)'
 export default function AdminDashboard() {
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100),
+    queryFn: () => localClient.entities.Order.list('-created_date', 100),
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100),
+    queryFn: () => localClient.entities.Product.list('-created_date', 100),
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: () => base44.entities.User.list('-created_date', 50),
+    queryFn: () => localClient.entities.User.list('-created_date', 50),
   });
 
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { ChevronLeft, CheckCircle2, Package, Truck, MapPin, Clock, Zap, Home, Printer, Phone, MessageCircle } from 'lucide-react';
@@ -23,7 +23,7 @@ export default function OrderTracking() {
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderId],
-    queryFn: () => base44.entities.Order.filter({ id: orderId }),
+    queryFn: () => localClient.entities.Order.filter({ id: orderId }),
     select: data => data[0],
     refetchInterval: 10000,
   });

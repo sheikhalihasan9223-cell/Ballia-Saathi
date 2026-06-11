@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Send, ChevronRight, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,7 +12,7 @@ export default function SupportAdmin() {
 
   const { data: tickets = [] } = useQuery({
     queryKey: ['all-tickets'],
-    queryFn: () => base44.entities.SupportTicket.list('-created_date', 100),
+    queryFn: () => localClient.entities.SupportTicket.list('-created_date', 100),
     refetchInterval: activeTicket ? 4000 : 10000,
   });
 
@@ -29,7 +29,7 @@ export default function SupportAdmin() {
         sender: 'admin', sender_name: 'Ballia Saathi Support',
         content: reply, timestamp: new Date().toISOString(), is_admin: true,
       }];
-      return base44.entities.SupportTicket.update(activeTicket.id, { messages: newMessages });
+      return localClient.entities.SupportTicket.update(activeTicket.id, { messages: newMessages });
     },
     onSuccess: (updated) => {
       setActiveTicket(updated);
@@ -39,7 +39,7 @@ export default function SupportAdmin() {
   });
 
   const closeTicket = useMutation({
-    mutationFn: () => base44.entities.SupportTicket.update(activeTicket.id, { status: 'closed' }),
+    mutationFn: () => localClient.entities.SupportTicket.update(activeTicket.id, { status: 'closed' }),
     onSuccess: (updated) => {
       setActiveTicket(updated);
       queryClient.invalidateQueries({ queryKey: ['all-tickets'] });

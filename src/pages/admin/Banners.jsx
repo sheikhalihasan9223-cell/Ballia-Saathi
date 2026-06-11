@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +19,11 @@ export default function BannersAdmin() {
 
   const { data: banners = [] } = useQuery({
     queryKey: ['admin-banners'],
-    queryFn: () => base44.entities.Banner.list('position'),
+    queryFn: () => localClient.entities.Banner.list('position'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Banner.create(data),
+    mutationFn: (data) => localClient.entities.Banner.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
       setOpen(false);
@@ -33,7 +33,7 @@ export default function BannersAdmin() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Banner.delete(id),
+    mutationFn: (id) => localClient.entities.Banner.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
       toast.success('Banner deleted');

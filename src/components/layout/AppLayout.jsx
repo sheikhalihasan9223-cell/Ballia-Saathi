@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Grid3X3, ShoppingCart, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getCart, getCartTotal } from '@/lib/cartStore';
+import { getCart } from '@/lib/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import WhatsAppFloat from '@/components/WhatsAppFloat';
 

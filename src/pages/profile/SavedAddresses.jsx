@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Home, MapPin, Plus, Trash2, MoreVertical } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,21 +19,21 @@ export default function SavedAddresses() {
   const [menuOpen, setMenuOpen] = useState(null);
   const queryClient = useQueryClient();
 
-  useEffect(() => { base44.auth.me().then(setUser); }, []);
+  useEffect(() => { localClient.auth.me().then(setUser); }, []);
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['addresses', user?.email],
-    queryFn: () => base44.entities.Address.filter({ user_email: user.email }),
+    queryFn: () => localClient.entities.Address.filter({ user_email: user.email }),
     enabled: !!user?.email,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Address.create({ ...data, user_email: user.email }),
+    mutationFn: (data) => localClient.entities.Address.create({ ...data, user_email: user.email }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['addresses'] }); setOpen(false); setForm(emptyAddr); toast.success('Address saved'); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Address.delete(id),
+    mutationFn: (id) => localClient.entities.Address.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['addresses'] }); setMenuOpen(null); toast.success('Address deleted'); },
   });
 

@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/user/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return signedIn() && userDoc().data.role == 'admin';
+    }
+
+    function isOwnerByEmail() {
+      return signedIn() && resource.data.user_email == request.auth.token.email;
+    }
+
+    function isIncomingOwnerByEmail() {
+      return signedIn() && request.resource.data.user_email == request.auth.token.email;
+    }
+
+    match /user/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /product/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banner/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /coupon/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /order/{documentId} {
+      allow read: if isAdmin() || isOwnerByEmail();
+      allow create: if isAdmin() || isIncomingOwnerByEmail();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /address/{documentId} {
+      allow read, update, delete: if isAdmin() || isOwnerByEmail();
+      allow create: if isAdmin() || isIncomingOwnerByEmail();
+    }
+
+    match /wishlist/{documentId} {
+      allow read, update, delete: if isAdmin() || isOwnerByEmail();
+      allow create: if isAdmin() || isIncomingOwnerByEmail();
+    }
+
+    match /supportTicket/{documentId} {
+      allow read, update: if isAdmin() || isOwnerByEmail();
+      allow create: if isAdmin() || isIncomingOwnerByEmail();
+      allow delete: if isAdmin();
+    }
+
+    match /riderLocation/{documentId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+  }
+}

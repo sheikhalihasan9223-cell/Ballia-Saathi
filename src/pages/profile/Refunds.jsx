@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
@@ -9,11 +9,11 @@ export default function Refunds() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => { base44.auth.me().then(setUser); }, []);
+  useEffect(() => { localClient.auth.me().then(setUser); }, []);
 
   const { data: orders = [] } = useQuery({
     queryKey: ['refund-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ user_email: user.email, status: 'cancelled' }, '-created_date'),
+    queryFn: () => localClient.entities.Order.filter({ user_email: user.email, status: 'cancelled' }, '-created_date'),
     enabled: !!user?.email,
   });
 

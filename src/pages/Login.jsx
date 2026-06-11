@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { localClient } from "@/api/localClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { checkUserAuth } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,20 +24,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // temporary local login
-      if (!email || !password) {
-        throw new Error("Please enter email and password");
-      }
-
-      localStorage.setItem("token", "local-demo-token");
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email,
-          name: email.split("@")[0],
-        })
-      );
-
+      await localClient.auth.login({ email, password });
+      await checkUserAuth();
       navigate("/");
     } catch (err) {
       setError(err.message || "Invalid email or password");
@@ -43,8 +34,18 @@ export default function Login() {
     }
   };
 
-  const handleGoogle = () => {
-    setError("Google login needs Firebase/Supabase backend setup.");
+  const handleGoogle = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await localClient.auth.loginWithProvider("google", "/");
+      await checkUserAuth();
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Google login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
