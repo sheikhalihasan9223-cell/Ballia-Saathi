@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingBag, Users, Tag, Image, BarChart3, ChevronLeft, Zap, MessageCircle, Grid3X3, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users, Tag, Image, BarChart3, ChevronLeft, MessageCircle, Grid3X3, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logoUrl } from '@/api/localClient';
 
 const sidebarItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -25,7 +26,7 @@ export default function AdminLayout() {
       <aside className="hidden md:flex w-64 flex-col bg-card border-r border-border fixed h-full z-40">
         <div className="p-6 border-b border-border">
           <Link to="/admin" className="flex items-center gap-2">
-            <img src="https://media.base44.com/images/public/6a13f955573598b80a82a5b2/487d60ee3_ChatGPTImageMay27202601_03_13PM.png" alt="Ballia Saathi" className="w-9 h-9 rounded-xl object-cover" />
+            <img src={logoUrl} alt="Ballia Saathi" className="w-9 h-9 rounded-xl object-cover" />
             <div>
               <span className="font-heading font-bold text-lg">Ballia Saathi</span>
               <span className="text-[10px] ml-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>
@@ -61,7 +62,7 @@ export default function AdminLayout() {
       {/* Mobile top nav */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center justify-between">
         <Link to="/admin" className="flex items-center gap-2">
-          <img src="https://media.base44.com/images/public/6a13f955573598b80a82a5b2/487d60ee3_ChatGPTImageMay27202601_03_13PM.png" alt="Ballia Saathi" className="w-8 h-8 rounded-lg object-cover" />
+          <img src={logoUrl} alt="Ballia Saathi" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-heading font-bold">Ballia Saathi</span>
         </Link>
         <Button variant="ghost" size="sm" onClick={() => navigate('/')}>

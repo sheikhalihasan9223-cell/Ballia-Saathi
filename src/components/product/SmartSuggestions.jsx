@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { Sparkles } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 
@@ -37,7 +37,7 @@ export default function SmartSuggestions({ product, userEmail }) {
 
   const { data: suggestions = [] } = useQuery({
     queryKey: ['smart-suggestions', product?.id, primaryCategory],
-    queryFn: () => base44.entities.Product.filter({ category: primaryCategory, is_active: true }),
+    queryFn: () => localClient.entities.Product.filter({ category: primaryCategory, is_active: true }),
     enabled: !!product?.id,
     select: (data) => data.filter(p => p.id !== product.id).slice(0, 4),
   });

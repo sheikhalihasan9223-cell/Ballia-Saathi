@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { X, MessageCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const WA_NUMBER = '919565189483';
 const WA_DEFAULT_MSG = encodeURIComponent('Namaste! Ballia Saathi se order karna hai 🛒');

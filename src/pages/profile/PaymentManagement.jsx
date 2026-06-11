@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { localClient } from '@/api/localClient';
 import { ChevronLeft, Plus, CreditCard, Smartphone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,13 +8,36 @@ import { toast } from 'sonner';
 
 export default function PaymentManagement() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [upis, setUpis] = useState([]);
   const [upiInput, setUpiInput] = useState('');
   const [adding, setAdding] = useState(false);
 
+  const storageKey = useMemo(
+    () => `ballia_saathi_upi_${user?.email || 'guest'}`,
+    [user?.email],
+  );
+
+  useEffect(() => {
+    localClient.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    try {
+      setUpis(JSON.parse(localStorage.getItem(storageKey)) || []);
+    } catch {
+      setUpis([]);
+    }
+  }, [storageKey]);
+
+  const saveUpis = (nextUpis) => {
+    setUpis(nextUpis);
+    localStorage.setItem(storageKey, JSON.stringify(nextUpis));
+  };
+
   const addUpi = () => {
     if (!upiInput.includes('@')) { toast.error('Enter a valid UPI ID (e.g. name@upi)'); return; }
-    setUpis([...upis, upiInput]);
+    saveUpis([...upis, upiInput]);
     setUpiInput('');
     setAdding(false);
     toast.success('UPI ID added');
@@ -59,7 +83,7 @@ export default function PaymentManagement() {
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">UPI</div>
                     <span className="text-sm font-medium">{upi}</span>
                   </div>
-                  <button onClick={() => { setUpis(upis.filter((_, j) => j !== i)); toast.success('Removed'); }}
+                  <button onClick={() => { saveUpis(upis.filter((_, j) => j !== i)); toast.success('Removed'); }}
                     className="text-destructive text-xs font-medium">Remove</button>
                 </div>
               ))}

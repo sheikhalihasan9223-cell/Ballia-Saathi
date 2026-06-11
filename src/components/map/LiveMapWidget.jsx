@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Truck, Home, ExternalLink, Navigation } from 'lucide-react';
+import { localClient } from '@/api/localClient';
+import { Truck, Home, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Converts lat/lng to x/y % in our mini map viewport
@@ -17,7 +17,7 @@ export default function LiveMapWidget({ orderId, deliveryAddress, dark = true })
     if (!orderId) return;
     // Poll rider location every 5s
     const fetch = () => {
-      base44.entities.RiderLocation.filter({ order_id: orderId })
+      localClient.entities.RiderLocation.filter({ order_id: orderId })
         .then(res => { if (res[0]) setRiderData(res[0]); })
         .catch(() => {});
     };

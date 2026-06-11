@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -20,12 +20,12 @@ export default function SearchPage() {
   const [query, setQuery] = useState(urlQ);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUserEmail(u?.email || null)).catch(() => {});
+    localClient.auth.me().then(u => setUserEmail(u?.email || null)).catch(() => {});
   }, []);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ is_active: true }),
+    queryFn: () => localClient.entities.Product.filter({ is_active: true }),
   });
 
   const filtered = useMemo(() => {

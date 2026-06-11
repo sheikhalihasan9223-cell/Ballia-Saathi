@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, MapPin, User, Phone, Mail, Package, Printer, Navigation, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, User, Phone, Mail, Package, Printer, ExternalLink } from 'lucide-react';
 import LiveMapWidget from '@/components/map/LiveMapWidget';
 import { printInvoice } from '@/components/invoice/PrintInvoice';
 
@@ -26,21 +26,21 @@ export default function AdminOrders() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100),
+    queryFn: () => localClient.entities.Order.list('-created_date', 100),
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: () => base44.entities.User.list('-created_date', 200),
+    queryFn: () => localClient.entities.User.list('-created_date', 200),
   });
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['admin-addresses'],
-    queryFn: () => base44.entities.Address.list('-created_date', 200),
+    queryFn: () => localClient.entities.Address.list('-created_date', 200),
   });
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Order.update(id, { status }),
+    mutationFn: ({ id, status }) => localClient.entities.Order.update(id, { status }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       toast.success('Order status updated');

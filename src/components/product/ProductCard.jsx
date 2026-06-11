@@ -32,7 +32,7 @@ import { Plus, Minus, Star, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { addToCart, getCart, updateQuantity } from '@/lib/cartStore';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -40,7 +40,7 @@ import { toast } from 'sonner';
 function useWishlist(userEmail) {
   return useQuery({
     queryKey: ['wishlist-all', userEmail],
-    queryFn: () => base44.entities.Wishlist.filter({ user_email: userEmail }),
+    queryFn: () => localClient.entities.Wishlist.filter({ user_email: userEmail }),
     enabled: !!userEmail,
     staleTime: 30000, // don't refetch for 30s
   });
@@ -66,7 +66,7 @@ export default function ProductCard({ product, userEmail }) {
   }, [product.id]);
 
   const addWishlist = useMutation({
-    mutationFn: () => base44.entities.Wishlist.create({
+    mutationFn: () => localClient.entities.Wishlist.create({
       user_email: userEmail,
       product_id: product.id,
       product_name: product.name,
@@ -81,7 +81,7 @@ export default function ProductCard({ product, userEmail }) {
   });
 
   const removeWishlist = useMutation({
-    mutationFn: () => base44.entities.Wishlist.delete(wishlisted.id),
+    mutationFn: () => localClient.entities.Wishlist.delete(wishlisted.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist-all', userEmail] });
       toast.success('Removed from wishlist');

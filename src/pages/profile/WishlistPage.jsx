@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Heart, ShoppingCart } from 'lucide-react';
 import { addToCart } from '@/lib/cartStore';
@@ -11,16 +11,16 @@ export default function WishlistPage() {
   const [user, setUser] = useState(null);
   const queryClient = useQueryClient();
 
-  useEffect(() => { base44.auth.me().then(setUser); }, []);
+  useEffect(() => { localClient.auth.me().then(setUser); }, []);
 
   const { data: wishlist = [] } = useQuery({
     queryKey: ['wishlist', user?.email],
-    queryFn: () => base44.entities.Wishlist.filter({ user_email: user.email }),
+    queryFn: () => localClient.entities.Wishlist.filter({ user_email: user.email }),
     enabled: !!user?.email,
   });
 
   const removeMutation = useMutation({
-    mutationFn: (id) => base44.entities.Wishlist.delete(id),
+    mutationFn: (id) => localClient.entities.Wishlist.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wishlist'] }),
   });
 

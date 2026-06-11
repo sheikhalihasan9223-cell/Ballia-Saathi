@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient, logoUrl } from '@/api/localClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  MapPin, Package, CheckCircle2, Navigation, Phone, User, Clock, Truck,
-  Wifi, WifiOff, ExternalLink, ChevronLeft, TrendingUp, Star, IndianRupee,
-  BarChart3, Calendar, ArrowRight, Home, ShoppingBag, RefreshCw, Bell, X
+  MapPin, Package, CheckCircle2, Navigation, User, Truck,
+  Wifi, WifiOff, ExternalLink, ChevronLeft, TrendingUp, Star, IndianRupee, Home, ShoppingBag, RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 import { sendPushNotification, ORDER_STATUS_MESSAGES } from '@/lib/useNotifications';
@@ -44,9 +43,9 @@ export default function RiderPanel() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    localClient.auth.me().then(u => {
       setRider(u);
-      base44.entities.RiderLocation.filter({ rider_email: u.email })
+      localClient.entities.RiderLocation.filter({ rider_email: u.email })
         .then(res => {
           if (res[0]) {
             locationDocRef.current = res[0];
@@ -64,9 +63,9 @@ export default function RiderPanel() {
     queryKey: ['rider-available'],
     queryFn: async () => {
       const [placed, confirmed, packing] = await Promise.all([
-        base44.entities.Order.filter({ status: 'placed' }),
-        base44.entities.Order.filter({ status: 'confirmed' }),
-        base44.entities.Order.filter({ status: 'packing' }),
+        localClient.entities.Order.filter({ status: 'placed' }),
+        localClient.entities.Order.filter({ status: 'confirmed' }),
+        localClient.entities.Order.filter({ status: 'packing' }),
       ]);
       return [...placed, ...confirmed, ...packing];
     },
@@ -75,17 +74,17 @@ export default function RiderPanel() {
 
   const { data: activeDeliveries = [] } = useQuery({
     queryKey: ['rider-active'],
-    queryFn: () => base44.entities.Order.filter({ status: 'out_for_delivery' }),
+    queryFn: () => localClient.entities.Order.filter({ status: 'out_for_delivery' }),
     refetchInterval: 8000,
   });
 
   const { data: deliveredOrders = [] } = useQuery({
     queryKey: ['rider-delivered'],
-    queryFn: () => base44.entities.Order.filter({ status: 'delivered' }),
+    queryFn: () => localClient.entities.Order.filter({ status: 'delivered' }),
   });
 
   const updateOrder = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Order.update(id, { status }),
+    mutationFn: ({ id, status }) => localClient.entities.Order.update(id, { status }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['rider-available'] });
       queryClient.invalidateQueries({ queryKey: ['rider-active'] });
@@ -111,9 +110,9 @@ export default function RiderPanel() {
           last_updated: new Date().toISOString(),
         };
         if (locationDocRef.current?.id) {
-          await base44.entities.RiderLocation.update(locationDocRef.current.id, data);
+          await localClient.entities.RiderLocation.update(locationDocRef.current.id, data);
         } else {
-          const created = await base44.entities.RiderLocation.create(data);
+          const created = await localClient.entities.RiderLocation.create(data);
           locationDocRef.current = created;
         }
       },
@@ -125,7 +124,7 @@ export default function RiderPanel() {
   const stopTracking = async () => {
     if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
     if (locationDocRef.current?.id) {
-      await base44.entities.RiderLocation.update(locationDocRef.current.id, { is_online: false, status: 'offline' });
+      await localClient.entities.RiderLocation.update(locationDocRef.current.id, { is_online: false, status: 'offline' });
     }
     setCurrentCoords(null);
   };
@@ -140,7 +139,7 @@ export default function RiderPanel() {
   const acceptOrder = async (order) => {
     await updateOrder.mutateAsync({ id: order.id, status: 'out_for_delivery' });
     if (locationDocRef.current?.id) {
-      await base44.entities.RiderLocation.update(locationDocRef.current.id, {
+      await localClient.entities.RiderLocation.update(locationDocRef.current.id, {
         order_id: order.id,
         order_number: order.order_number,
         status: 'delivering'
@@ -152,7 +151,7 @@ export default function RiderPanel() {
   const markDelivered = async (order) => {
     await updateOrder.mutateAsync({ id: order.id, status: 'delivered' });
     if (locationDocRef.current?.id) {
-      await base44.entities.RiderLocation.update(locationDocRef.current.id, {
+      await localClient.entities.RiderLocation.update(locationDocRef.current.id, {
         order_id: '', order_number: '', status: 'available'
       });
     }
@@ -185,6 +184,7 @@ export default function RiderPanel() {
             >
               <ChevronLeft className="w-5 h-5 text-white" />
             </button>
+            <img src={logoUrl} alt="Ballia Saathi" className="w-9 h-9 rounded-xl object-cover bg-white" />
             <div>
               <h1 className="font-heading font-bold text-base text-white">Rider Panel</h1>
               <p className="text-[11px] text-white/40">{rider?.full_name || 'Delivery Partner'}</p>
@@ -250,7 +250,7 @@ export default function RiderPanel() {
           />
         )}
         {activeTab === 'map' && (
-          <MapTab currentCoords={currentCoords} riderData={locationDocRef.current} isOnline={isOnline} />
+          <MapTab currentCoords={currentCoords} isOnline={isOnline} />
         )}
         {activeTab === 'earnings' && (
           <EarningsTab
@@ -449,7 +449,7 @@ function OrderCard({ order, isActive, onAccept, onMarkDelivered }) {
 }
 
 // ─── MAP TAB ───────────────────────────────────────────────────────────────────
-function MapTab({ currentCoords, riderData, isOnline }) {
+function MapTab({ currentCoords, isOnline }) {
   return (
     <div className="px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, getCartTotal, clearCart } from '@/lib/cartStore';
-import { base44 } from '@/api/base44Client';
+import { getCart, clearCart } from '@/lib/cartStore';
+import { localClient } from '@/api/localClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ChevronLeft, MapPin, Navigation, Zap, Plus, CheckCircle2, Home, Briefcase } from 'lucide-react';
@@ -22,7 +21,6 @@ export default function Checkout() {
   const total = subtotal + deliveryFee + codFee;
 
   const [userEmail, setUserEmail] = useState(null);
-  const [userName, setUserName] = useState('');
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', pincode: '' });
@@ -30,14 +28,14 @@ export default function Checkout() {
   const [showCodPopup, setShowCodPopup] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      if (u) { setUserEmail(u.email); setUserName(u.full_name || ''); setForm(f => ({ ...f, name: u.full_name || '' })); }
+    localClient.auth.me().then(u => {
+      if (u) { setUserEmail(u.email); setForm(f => ({ ...f, name: u.full_name || '' })); }
     });
   }, []);
 
   const { data: savedAddresses = [] } = useQuery({
     queryKey: ['checkout-addresses', userEmail],
-    queryFn: () => base44.entities.Address.filter({ user_email: userEmail }),
+    queryFn: () => localClient.entities.Address.filter({ user_email: userEmail }),
     enabled: !!userEmail,
     onSuccess: (data) => {
       if (data.length > 0 && !selectedAddressId) {
@@ -84,7 +82,7 @@ export default function Checkout() {
 
   const saveAndSelectAddress = async () => {
     if (!form.address || !form.city) { toast.error('Please fill address and city'); return null; }
-    const newAddr = await base44.entities.Address.create({
+    const newAddr = await localClient.entities.Address.create({
       user_email: userEmail,
       full_address: form.address,
       city: form.city,
@@ -99,7 +97,7 @@ export default function Checkout() {
 
   const placeOrderMutation = useMutation({
     mutationFn: async (paymentMethod) => {
-      const user = await base44.auth.me();
+      const user = await localClient.auth.me();
       const orderNumber = 'ZPR' + Date.now().toString(36).toUpperCase();
 
       let deliveryAddress = '';
@@ -112,7 +110,7 @@ export default function Checkout() {
         deliveryAddress = `${addr.full_address}, ${addr.city}${addr.pincode ? ' - ' + addr.pincode : ''}`;
       }
 
-      return base44.entities.Order.create({
+      return localClient.entities.Order.create({
         order_number: orderNumber,
         items: items.map(i => ({
           product_id: i.product_id, name: i.name, image_url: i.image_url,

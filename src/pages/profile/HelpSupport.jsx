@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Send, MessageCircle, Mail, Loader2, Bot } from 'lucide-react';
 import { format } from 'date-fns';
@@ -15,7 +15,7 @@ const QUICK_ACTIONS = [
 ];
 
 async function getAiReply(ticket, userMessage) {
-  const userOrders = await base44.entities.Order.filter(
+  const userOrders = await localClient.entities.Order.filter(
     { user_email: ticket.user_email }, '-created_date', 5
   ).catch(() => []);
 
@@ -48,7 +48,7 @@ Instructions:
 - Respond in the same language as the customer (Hindi or English).
 - Sign off by asking if there's anything else you can help with.`;
 
-  return base44.integrations.Core.InvokeLLM({ prompt });
+  return localClient.integrations.Core.InvokeLLM({ prompt });
 }
 
 export default function HelpSupport() {
@@ -62,11 +62,11 @@ export default function HelpSupport() {
   const queryClient = useQueryClient();
   const bottomRef = useRef(null);
 
-  useEffect(() => { base44.auth.me().then(setUser); }, []);
+  useEffect(() => { localClient.auth.me().then(setUser); }, []);
 
   const { data: tickets = [] } = useQuery({
     queryKey: ['my-tickets', user?.email],
-    queryFn: () => base44.entities.SupportTicket.filter({ user_email: user.email }, '-created_date'),
+    queryFn: () => localClient.entities.SupportTicket.filter({ user_email: user.email }, '-created_date'),
     enabled: !!user?.email,
     refetchInterval: activeTicket ? 5000 : false,
   });
@@ -93,7 +93,7 @@ export default function HelpSupport() {
         timestamp: new Date().toISOString(),
         is_admin: true,
       }];
-      const updated = await base44.entities.SupportTicket.update(ticket.id, { messages: newMessages });
+      const updated = await localClient.entities.SupportTicket.update(ticket.id, { messages: newMessages });
       setActiveTicket(updated);
       queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
     } finally {
@@ -102,7 +102,7 @@ export default function HelpSupport() {
   };
 
   const createTicket = useMutation({
-    mutationFn: () => base44.entities.SupportTicket.create({
+    mutationFn: () => localClient.entities.SupportTicket.create({
       ticket_id: 'TK' + Date.now().toString(36).toUpperCase(),
       user_email: user.email,
       user_name: user.full_name || 'User',
@@ -130,7 +130,7 @@ export default function HelpSupport() {
         sender: user.email, sender_name: user.full_name || 'User',
         content: userMsg, timestamp: new Date().toISOString(), is_admin: false,
       }];
-      const updated = await base44.entities.SupportTicket.update(activeTicket.id, { messages: newMessages });
+      const updated = await localClient.entities.SupportTicket.update(activeTicket.id, { messages: newMessages });
       setActiveTicket(updated);
       queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
       return { updated, userMsg };

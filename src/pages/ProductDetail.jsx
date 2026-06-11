@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Star, Plus, Minus, ShoppingCart, Zap, Heart, Package, Truck, Shield, RotateCcw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { addToCart, getCart, updateQuantity } from '@/lib/cartStore';
 import { getCategoryById } from '@/lib/categories';
 import { motion } from 'framer-motion';
@@ -14,18 +13,23 @@ export default function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [qty, setQty] = useState(0);
+  const [userEmail, setUserEmail] = useState(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', productId],
-    queryFn: () => base44.entities.Product.filter({ id: productId }),
+    queryFn: () => localClient.entities.Product.filter({ id: productId }),
     select: data => data[0],
   });
 
   const { data: relatedProducts = [] } = useQuery({
     queryKey: ['related', product?.category],
-    queryFn: () => base44.entities.Product.filter({ category: product.category, is_active: true }),
+    queryFn: () => localClient.entities.Product.filter({ category: product.category, is_active: true }),
     enabled: !!product?.category,
   });
+
+  useEffect(() => {
+    localClient.auth.me().then(u => setUserEmail(u?.email || null)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const syncQty = () => {
@@ -208,14 +212,14 @@ export default function ProductDetail() {
         </div>
 
         {/* Smart Suggestions */}
-        <SmartSuggestions product={product} userEmail={null} />
+        <SmartSuggestions product={product} userEmail={userEmail} />
 
         {/* Related Products */}
         {related.length > 0 && (
           <div className="mt-6 mb-4">
             <h3 className="font-heading font-bold text-lg mb-3">You might also like</h3>
             <div className="grid grid-cols-2 gap-3">
-              {related.map(p => <ProductCard key={p.id} product={p} />)}
+              {related.map(p => <ProductCard key={p.id} product={p} userEmail={userEmail} />)}
             </div>
           </div>
         )}

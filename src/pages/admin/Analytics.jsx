@@ -1,18 +1,18 @@
-import { base44 } from '@/api/base44Client';
+import { localClient } from '@/api/localClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, ShoppingBag, DollarSign, Star } from 'lucide-react';
 
 export default function AnalyticsAdmin() {
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100),
+    queryFn: () => localClient.entities.Order.list('-created_date', 100),
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100),
+    queryFn: () => localClient.entities.Product.list('-created_date', 100),
   });
 
   const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { localClient } from '@/api/localClient';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { ChevronDown, ChevronUp, MapPin, Package, Mail, Phone, Shield, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Package, Mail, Phone, Shield, Users, Bike, UserRound, Crown } from 'lucide-react';
+import { toast } from 'sonner';
 
 const statusColors = {
   placed: 'bg-blue-100 text-blue-700',
@@ -14,10 +15,18 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-700',
 };
 
-function UserCard({ user, orders, addresses }) {
+const roleStyles = {
+  super_admin: 'bg-yellow-100 text-yellow-700',
+  admin: 'bg-accent/10 text-accent',
+  rider: 'bg-primary/10 text-primary',
+  user: 'bg-muted text-muted-foreground',
+};
+
+function UserCard({ user, orders, addresses, onRoleChange, isUpdatingRole }) {
   const [expanded, setExpanded] = useState(false);
   const userOrders = orders.filter(o => o.user_email === user.email);
   const userAddresses = addresses.filter(a => a.user_email === user.email);
+  const role = user.role || 'user';
 
   return (
     <Card className="overflow-hidden">
@@ -27,14 +36,14 @@ function UserCard({ user, orders, addresses }) {
           onClick={() => setExpanded(!expanded)}
         >
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${user.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${role === 'super_admin' ? 'bg-yellow-100 text-yellow-700' : role === 'admin' ? 'bg-accent/20 text-accent' : role === 'rider' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
               {user.full_name?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-semibold text-sm">{user.full_name || 'Unknown'}</p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${user.role === 'admin' ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                  {user.role || 'user'}
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${roleStyles[role] || roleStyles.user}`}>
+                  {role}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -48,6 +57,35 @@ function UserCard({ user, orders, addresses }) {
 
         {expanded && (
           <div className="border-t border-border bg-muted/20 p-4 space-y-4">
+            <div className="bg-card rounded-xl p-3 border border-border">
+              <p className="text-xs font-bold text-muted-foreground mb-2">Access Role</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { value: 'user', label: 'User', icon: UserRound },
+                  { value: 'admin', label: 'Admin', icon: Shield },
+                  { value: 'rider', label: 'Rider', icon: Bike },
+                  { value: 'super_admin', label: 'Super', icon: Crown },
+                ].map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => onRoleChange(user, value)}
+                    disabled={isUpdatingRole || role === value}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
+                      role === value
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background hover:bg-muted'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                User sees customer pages. Admin sees Admin Dashboard. Rider sees Rider Panel. Super Admin sees everything.
+              </p>
+            </div>
+
             <div className="bg-card rounded-xl p-3 border border-border">
               <p className="text-xs font-bold text-muted-foreground mb-2">Contact</p>
               <p className="text-xs flex items-center gap-1.5"><Mail className="w-3 h-3" /> {user.email}</p>
@@ -104,31 +142,48 @@ function UserCard({ user, orders, addresses }) {
 
 export default function UsersAdmin() {
   const [activeTab, setActiveTab] = useState('users');
+  const queryClient = useQueryClient();
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: () => base44.entities.User.list('-created_date', 200),
+    queryFn: () => localClient.entities.User.list('-created_date', 200),
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 500),
+    queryFn: () => localClient.entities.Order.list('-created_date', 500),
   });
 
   const { data: addresses = [] } = useQuery({
     queryKey: ['admin-addresses'],
-    queryFn: () => base44.entities.Address.list('-created_date', 200),
+    queryFn: () => localClient.entities.Address.list('-created_date', 200),
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: ({ user, role }) => localClient.entities.User.update(user.id, { role }),
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      window.dispatchEvent(new CustomEvent('ballia-saathi-user-role-updated', { detail: updatedUser }));
+      toast.success('User role updated');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update role');
+    },
   });
 
   const admins = allUsers.filter(u => u.role === 'admin');
-  const users = allUsers.filter(u => u.role !== 'admin');
+  const riders = allUsers.filter(u => u.role === 'rider');
+  const superAdmins = allUsers.filter(u => u.role === 'super_admin');
+  const users = allUsers.filter(u => !u.role || u.role === 'user');
 
   const tabs = [
     { key: 'users', label: 'Users', icon: Users, count: users.length },
+    { key: 'super_admins', label: 'Super Admins', icon: Crown, count: superAdmins.length },
     { key: 'admins', label: 'Admins', icon: Shield, count: admins.length },
+    { key: 'riders', label: 'Riders', icon: Bike, count: riders.length },
   ];
 
-  const displayList = activeTab === 'admins' ? admins : users;
+  const displayList = activeTab === 'super_admins' ? superAdmins : activeTab === 'admins' ? admins : activeTab === 'riders' ? riders : users;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -160,6 +215,13 @@ export default function UsersAdmin() {
         })}
       </div>
 
+      {activeTab === 'super_admins' && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-700 font-medium flex items-center gap-2">
+          <Crown className="w-4 h-4" />
+          Super Admins can access the customer app, admin dashboard, and rider panel.
+        </div>
+      )}
+
       {activeTab === 'admins' && (
         <div className="mb-4 p-3 bg-accent/5 border border-accent/20 rounded-xl text-xs text-accent font-medium flex items-center gap-2">
           <Shield className="w-4 h-4" />
@@ -169,7 +231,14 @@ export default function UsersAdmin() {
 
       <div className="space-y-3">
         {displayList.map(user => (
-          <UserCard key={user.id} user={user} orders={orders} addresses={addresses} />
+          <UserCard
+            key={user.id}
+            user={user}
+            orders={orders}
+            addresses={addresses}
+            isUpdatingRole={roleMutation.isPending}
+            onRoleChange={(targetUser, role) => roleMutation.mutate({ user: targetUser, role })}
+          />
         ))}
         {displayList.length === 0 && (
           <p className="text-center text-muted-foreground py-12">No {activeTab} found</p>
